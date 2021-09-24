@@ -17,11 +17,12 @@ export function Searchbar({onSubmit}) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(input);
     if (input.trim() === "") {
       toast.error("Please, fulfill the search form");
+    } else {
+      onSubmit(input);
+      clearInput();
     }
-    clearInput();
   }
   return (
     <header className={s.Searchbar}>

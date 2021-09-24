@@ -3,12 +3,12 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Loader from "react-loader-spinner";
 import { fetchImgWithQuery } from '../../services/imagesApi'
-import { Searchbar } from "../searchbar/Searchbar";
-import { ImageGallery } from "../imageGallery/ImageGallery";
-import { ImageGalleryItem } from "../imageGalleryItem/ImageGalleryItem";
-import { Button } from "../button/Button";
-import { Modal } from "../modal/Modal";
-import { Wrapper } from "../wrapper/Wrapper";
+import { Searchbar } from "../Searchbar/Searchbar";
+import { ImageGallery } from "../ImageGallery/ImageGallery";
+import { ImageGalleryItem } from "../ImageGalleryItem/ImageGalleryItem";
+import { Button } from "../Button/Button";
+import { Modal } from "../Modal/Modal";
+import { Wrapper } from "../Wrapper/Wrapper";
 
 const initialState = '';
 
@@ -25,22 +25,19 @@ export function App() {
   
   
   useEffect(() => {
-    if (searchQuery === '') {
+    if (searchQuery === '' || page === 1) {
       return
     }
-    setStatus('pending')
     const fetchImages = async () => {
       try {
         const { hits } = await fetchImgWithQuery(
           searchQuery,
-          page,
-          status
-        )
+          page
+        );
         if (hits.length === 0) {
           setStatus('rejected')
         } else {
         setImages((prevState) => ([...prevState, ...hits]))
-        setPage((prevState) => (prevState + 1))
         setError(null)
         scrollDown()
         setStatus('resolved')
@@ -52,33 +49,36 @@ export function App() {
         toggleStatus();
       }
   }
-    // setImages([])
     fetchImages()
-    // setPage(1)
-  }, [page, searchQuery, status])
+  }, [page])
 
-    
-
-  
-  // useEffect(() => {
-  //    fetchImages()
-  // }, [fetchImages, page])
-
-  // componentDidMount() {
-  //   window.addEventListener('keydown', this.onHandleKeydown)
-  // }
-
-  // componentWillUnmount() {
-  //   window.removeEventListener ('keydown', this.onHandleKeydown)
-  // }
-
-  // const onHandleKeydown = (e) => {
-  //   if (e.code === 'Escape') {
-  //     onToggleModal();
-  //   }
-  // }
-  // const fetchImages = useCallback(
-  // )
+  useEffect(() => {
+    if (searchQuery === '') {
+      return
+    }
+    const fetchImages = async () => {
+      try {
+        const { hits } = await fetchImgWithQuery(
+          searchQuery,
+          page
+        );
+        if (hits.length === 0) {
+          setStatus('rejected')
+        } else {
+        setImages(hits)
+        setError(null)
+        scrollDown()
+        setStatus('resolved')
+      }
+      } catch (err) {
+        setError(err.toString())
+        setStatus('rejected')
+      } finally {
+        toggleStatus();
+      }
+    }
+    fetchImages()
+  }, [searchQuery])
 
   const scrollDown = () => {
     window.scrollTo({
@@ -99,7 +99,7 @@ export function App() {
         break;
       
       case 'rejected':
-        toast.error("Not found!", error)
+        toast.error("Not found!")
         break;
 
       default:
@@ -108,7 +108,8 @@ export function App() {
   }
 
   const onHandleSubmit = (inputValue) => {
-    setSearchQuery(inputValue);
+    setPage(1)
+    setSearchQuery(inputValue)
   }
 
 
@@ -117,7 +118,7 @@ export function App() {
     onToggleModal();
   }
 
-  const onToggleModal = (e) => {
+  const onToggleModal = () => {
     setModal(!isModalOpen);
   }
 
@@ -134,9 +135,9 @@ export function App() {
             response={images}
             onSelect={onImageClick} />
         </ImageGallery>}
-      {status === 'resolved' && <Button onHandleSubmit={onLoadNext()} />}
+      {status === 'resolved' && <Button onHandleSubmit={onLoadNext} />}
       {isModalOpen &&
-        <Modal imageURL={imageData} onClose={onToggleModal()} />}
+        <Modal imageURL={imageData} onClose={onToggleModal} />}
       {status === 'pending' && <Loader
         type="ThreeDots"
         color="#3f51b5"
