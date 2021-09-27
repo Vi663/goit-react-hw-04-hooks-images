@@ -12,7 +12,7 @@ export function Searchbar({onSubmit}) {
   }
 
   const handleInputChange = (e) => {
-    setInput(e.currentTarget.value.toLowerCase());
+    setInput(e.currentTarget.value.toLowerCase())
   }
 
   const handleSubmit = (e) => {

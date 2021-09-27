@@ -1,7 +1,9 @@
-import React from 'react';
+
 import s from './Modal.module.css'
 
 export function Modal({ imageURL, onClose }) {
+
+  
   return (
     <div className={s.overlay} onClick={onClose}>
       <div className={s.modal}>

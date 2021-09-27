@@ -5,56 +5,26 @@ import Loader from "react-loader-spinner";
 import { fetchImgWithQuery } from '../../services/imagesApi'
 import { Searchbar } from "../Searchbar/Searchbar";
 import { ImageGallery } from "../ImageGallery/ImageGallery";
-import { ImageGalleryItem } from "../ImageGalleryItem/ImageGalleryItem";
+import { ImageGalleryItem } from "../ImageGallery/ImageGalleryItem/ImageGalleryItem";
 import { Button } from "../Button/Button";
 import { Modal } from "../Modal/Modal";
 import { Wrapper } from "../Wrapper/Wrapper";
 
-const initialState = '';
-
 export function App() {
   
   const [page, setPage] = useState(1)
-  const [searchQuery, setSearchQuery] = useState(initialState)
+  const [searchQuery, setSearchQuery] = useState('')
   const [status, setStatus] = useState('idle')
   const [isModalOpen, setModal] = useState(false)
-  const [imageData, setImageData] = useState(initialState)
+  const [imageData, setImageData] = useState(null)
   const [images, setImages] = useState([])
   const [error, setError] = useState(null)
-
-  
-  
-  useEffect(() => {
-    if (searchQuery === '' || page === 1) {
-      return
-    }
-    const fetchImages = async () => {
-      try {
-        const { hits } = await fetchImgWithQuery(
-          searchQuery,
-          page
-        );
-        if (hits.length === 0) {
-          setStatus('rejected')
-        } else {
-        setImages((prevState) => ([...prevState, ...hits]))
-        setError(null)
-        scrollDown()
-        setStatus('resolved')
-      }
-      } catch (err) {
-        setError(err.toString())
-        setStatus('rejected')
-      } finally {
-        toggleStatus();
-      }
-  }
-    fetchImages()
-  }, [page])
 
   useEffect(() => {
     if (searchQuery === '') {
       return
+    } else if (page === 1) {
+      setImages('')
     }
     const fetchImages = async () => {
       try {
@@ -64,47 +34,45 @@ export function App() {
         );
         if (hits.length === 0) {
           setStatus('rejected')
+          toast.error('Not found!')
         } else {
-        setImages(hits)
+        setImages((prevState) => ([...prevState, ...hits]))
         setError(null)
-        scrollDown()
         setStatus('resolved')
+        toast.success('Found!')
+        // scrollDown()
       }
       } catch (err) {
         setError(err.toString())
         setStatus('rejected')
-      } finally {
-        toggleStatus();
+        toast.error('Not found!')
       }
     }
     fetchImages()
-  }, [searchQuery])
+  }, [page, searchQuery])
+
+  useEffect(() => {
+  window.addEventListener('keydown', onHandleKeydown)
+  return function cleanup() {
+    window.removeEventListener('keydown', onHandleKeydown)
+  }
+}, [isModalOpen])
+  
+  function onToggleModal() {
+    setModal(!isModalOpen);
+  }
+
+  function onHandleKeydown(e) {
+    if (e.code === 'Escape') {
+      onToggleModal()
+    }
+  }
 
   const scrollDown = () => {
     window.scrollTo({
       top: document.documentElement.scrollHeight,
       behavior: 'smooth',
     });
-  }
-
-  const toggleStatus = () => {
-
-    switch (status) {
-      case 'pending':
-        toast.loading("Loading...")
-        break;
-
-      case 'resolved':
-        toast.success("Found!")
-        break;
-      
-      case 'rejected':
-        toast.error("Not found!")
-        break;
-
-      default:
-        return;
-    }
   }
 
   const onHandleSubmit = (inputValue) => {
@@ -118,10 +86,6 @@ export function App() {
     onToggleModal();
   }
 
-  const onToggleModal = () => {
-    setModal(!isModalOpen);
-  }
-
   const onLoadNext = () => {
     setPage((prevState) => (prevState + 1))
   }
@@ -129,23 +93,23 @@ export function App() {
   return (
     <Wrapper>
       <Searchbar onSubmit={onHandleSubmit} />
-      {status === 'resolved' &&
+      {images.length > 0 &&
         <ImageGallery>
           <ImageGalleryItem
             response={images}
             onSelect={onImageClick} />
         </ImageGallery>}
-      {status === 'resolved' && <Button onHandleSubmit={onLoadNext} />}
+      {images.length > 0 && <Button onHandleSubmit={onLoadNext} />}
       {isModalOpen &&
         <Modal imageURL={imageData} onClose={onToggleModal} />}
       {status === 'pending' && <Loader
-        type="ThreeDots"
-        color="#3f51b5"
+        type='ThreeDots'
+        color='#3f51b5'
         height={40}
         width={40}
         timeout={2000}
       />}
-      <ToastContainer position="top-right" theme="dark" autoClose='2000' />
+      <ToastContainer position='top-right' theme='dark' autoClose='2000' />
     </Wrapper>
   );
 }
